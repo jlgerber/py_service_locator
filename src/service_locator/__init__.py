@@ -1,4 +1,12 @@
-__all__ = ("service_locator", "get_service", "register", "services")
+__all__ = (
+    "get_service",
+    "register",
+    "services",
+    "get_service_proxy"
+)
+
+import inspect
+
 try:
     import thread
     import threading
@@ -6,18 +14,9 @@ except ImportError:
     thread = None
 
 
-
-#---------------------------------------------------------------------------
-#   Thread-related stuff
-#---------------------------------------------------------------------------
-
 #
 #_lock is used to serialize access to shared data structures in this module.
-#This needs to be an RLock because fileConfig() creates and configures
-#Handlers, and so might arbitrary user threads. Since Handler code updates the
-#shared dictionary _handlers, it needs to acquire the lock. But if configuring,
-#the lock would already have been acquired - so we need an RLock.
-#The same argument applies to Loggers and Manager.loggerDict.
+# This is borrowed from python logging
 #
 if thread:
     _lock = threading.RLock()
@@ -68,17 +67,57 @@ class ServiceLocator(object):
 
 service_locator = ServiceLocator()
 
+class ServiceProxy(object):
+    """
+    A ServiceProxy captures a service request but does not
+    fetch the service until invoked. This allows the service
+    registration to take place after importing code which calls
+    get_service_proxy, making usage more ergonomic at the cost of
+    a slight runtime penalty.
+    This class should handle proxied instances as well as classes
+    """
+    def __init__(self, service):
+        self._service_name = service
+        self._service = None
+        self._args = []
+        self._kwargs = {}
+
+    def __call__(self, *args, **kwargs):
+        self._args = args
+        self._kwargs = kwargs
+        return self
+
+    def __getattr__(self, name):
+        if self._service is None:
+            self._service = get_service(self._service_name)
+            if inspect.isclass(self._service):
+                self._service = self._service(*self._args, **self._kwargs)
+                # dont want to hang on to references and prevent
+                # garbage collection
+                del self._args
+                del self._kwargs
+        return getattr(self._service, name)
+
+def get_service_proxy(service):
+    """
+    Retrieve a proxy
+    """
+    return ServiceProxy(service)
+
 def get_service(service):
     """
-    retrieve a service
+    retrieve a service. This call returns the service directly. The
+    calling code should be imported after service registration. For
+    this reason, we also provide get_service_proxy, which does not
+    have this limitation.
     """
-    try:
-        _acquireLock()
-        return service_locator.service(service)
-    finally:
-        _releaseLock()
+    return service_locator.service(service)
+
 
 def services():
+    """
+    Return a list of keys for registered services
+    """
     return service_locator.services()
 
 def register(key, service):

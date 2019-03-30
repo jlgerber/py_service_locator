@@ -2,12 +2,12 @@ from example.context import service_locator
 
 print "services", service_locator.services()
 
-cls = service_locator.get_service("logger")
+cls = service_locator.get_service_proxy("logger")
 logger = cls(__name__)
 
 
 class Bla(object):
-    dioculator = service_locator.get_service("dioculator")("frombulator")
+    dioculator = service_locator.get_service_proxy("dioculator")("frombulator")
 
     def __init__(self):
         self.bla = "BLA"
