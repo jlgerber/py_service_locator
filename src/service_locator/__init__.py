@@ -17,6 +17,11 @@ communicating with it.
 Interactions with the ServiceLocator instance should be threadsafe by default.
 """
 
+# disable 'redifined-outer-name' because it is ok in this case
+# pylint: disable=W0621
+# disable 'too-few-pubic-methods' because it doesnt make sense here
+# pylint: disable=R0903
+
 import inspect
 try:
     import thread
