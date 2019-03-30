@@ -1,5 +1,22 @@
+from abc import ABCMeta, abstractmethod
 
-class Logger(object):
+class BaseLogger:
+    __meta__ = ABCMeta
+
+@abstractmethod
+def debug(self, *args):
+    raise NotImplementedError()
+
+@abstractmethod
+def info(self, *kwargs):
+    raise NotImplementedError()
+
+@abstractmethod
+def warn(self, *kwargs):
+    raise NotImplementedError()
+
+
+class Logger(BaseLogger):
     def __init__(self, name):
         self.name = name
 
@@ -12,7 +29,14 @@ class Logger(object):
     def warn(self, *args):
         print "WARN: {}:".format(self.name)," ".join(args)
 
-class Dioculator(object):
+class BaseDioculator:
+    __meta__ = ABCMeta
+
+@abstractmethod
+def dioculate(self):
+    raise NotImplementedError()
+
+class Dioculator(BaseDioculator):
     def __init__(self, frombulator):
         self.frombulator = frombulator
 

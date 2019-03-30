@@ -2,7 +2,8 @@ __all__ = (
     "get_service",
     "register",
     "services",
-    "get_service_proxy"
+    "get_service_proxy",
+    "key_is_superclass"
 )
 
 import inspect
@@ -12,7 +13,6 @@ try:
     import threading
 except ImportError:
     thread = None
-
 
 #
 #_lock is used to serialize access to shared data structures in this module.
@@ -40,14 +40,30 @@ def _releaseLock():
         _lock.release()
 
 class ServiceLocator(object):
+    """
+    Class which tracks services. A service may be a python instance
+    or class.
+    """
     _services = {}
+    def __init__(self, key_is_superclass=False):
+        """
+        If key_is_superclass is True, then we require the key to be
+        the superclass of the service. This promotes SOLID design
+        by requiring the dependence on an interface for a service
+        """
+        self._key_is_superclass = key_is_superclass
 
     def register(self, key, service):
         """
-        Register service
+        Register a service.
         """
         try:
             _acquireLock()
+            if self._key_is_superclass:
+                if inspect.isclass(service):
+                    assert issubclass(service, key)
+                else:
+                    assert isinstance(service, key)
             ServiceLocator._services[key] = service
         finally:
             _releaseLock()
@@ -122,3 +138,6 @@ def services():
 
 def register(key, service):
     service_locator.register(key, service)
+
+def key_is_superclass():
+    service_locator._key_is_superclass = True
