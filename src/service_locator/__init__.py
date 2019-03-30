@@ -1,3 +1,30 @@
+"""
+SERVICE_LOCATOR
+
+Implements this IoC pattern in Python. ServiceLocator is an alternative to
+DependencyInjection, which is often achieved through passing dependencies down the
+call graph via class inits. This can become unweildy for sufficiently large
+or deeply nested code bases.
+
+Rather than force classes to participate in dependency transport, we rely on
+a service locator to store services instantiated up front, and a service locator
+retrieval mechanism to fetch them from the service locator closer to the call sites.
+
+This module draws inspiration from Python's logging module, creating a singleton
+ServiceLocator instance in the module and providing convenience functions for
+communicating with it.
+
+Interactions with the ServiceLocator instance should be threadsafe by default.
+"""
+
+import inspect
+try:
+    import thread
+    import threading
+except ImportError:
+    thread = None
+
+
 __all__ = (
     "get_service",
     "register",
@@ -6,38 +33,30 @@ __all__ = (
     "key_is_superclass"
 )
 
-import inspect
-
-try:
-    import thread
-    import threading
-except ImportError:
-    thread = None
-
 #
-#_lock is used to serialize access to shared data structures in this module.
+#_LOCK is used to serialize access to shared data structures in this module.
 # This is borrowed from python logging
 #
 if thread:
-    _lock = threading.RLock()
+    _LOCK = threading.RLock()
 else:
-    _lock = None
+    _LOCK = None
 
-def _acquireLock():
+def _acquire_lock():
     """
     Acquire the module-level lock for serializing access to shared data.
 
-    This should be released with _releaseLock().
+    This should be released with _release_lock().
     """
-    if _lock:
-        _lock.acquire()
+    if _LOCK:
+        _LOCK.acquire()
 
-def _releaseLock():
+def _release_lock():
     """
-    Release the module-level lock acquired by calling _acquireLock().
+    Release the module-level lock acquired by calling _acquire_lock().
     """
-    if _lock:
-        _lock.release()
+    if _LOCK:
+        _LOCK.release()
 
 class ServiceLocator(object):
     """
@@ -45,43 +64,119 @@ class ServiceLocator(object):
     or class.
     """
     _services = {}
+
     def __init__(self, key_is_superclass=False):
         """
         If key_is_superclass is True, then we require the key to be
         the superclass of the service. This promotes SOLID design
         by requiring the dependence on an interface for a service
         """
-        self._key_is_superclass = key_is_superclass
+        self.key_is_superclass = key_is_superclass
 
     def register(self, key, service):
         """
-        Register a service.
+        Register a service with the ServiceLocator.
+
+        Parameters
+        ----------
+        key : Hashable
+            The key under which one whishes to register the supplied `service`. The
+            only restriction is that the key must be hashable, athough it is typically
+            a string. Alternatively, if `key_is_superclass()` has been invoked during setup,
+            one expects a superclass of the service, and ideally an abstract class at that.
+
+        Raises
+        ------
+        AssertionError
+            If `key_is_superclass()` has been invoked, and the service is not
+            either an instance or subclass of `key`.
+        TypeError
+            If the key supplied is not hashable.
         """
         try:
-            _acquireLock()
-            if self._key_is_superclass:
+            _acquire_lock()
+            if self.key_is_superclass:
                 if inspect.isclass(service):
                     assert issubclass(service, key)
                 else:
                     assert isinstance(service, key)
             ServiceLocator._services[key] = service
         finally:
-            _releaseLock()
+            _release_lock()
 
-    def has_service(self, key):
-        return ServiceLocator._services.has_service(key)
+    @classmethod
+    def has_service(cls, service_key):
+        """
+        Tests whether the ServiceLocator has the specified `service_key`.
 
-    def service(self, key):
+        Parameters
+        ----------
+        service_key : Hashable
+            The key we wish to test the ServiceLocator against. If the ServiceLocator
+            has the supplied `service_key`, this method returns `True`. Otherwise, it
+            returns `False`.
+
+        Raises
+        ------
+        TypeError
+            If `service_key` is unhashable.
+        """
         try:
-            _acquireLock()
-            return ServiceLocator._services[key]
+            _acquire_lock()
+            return cls._services.has_key(service_key)
         finally:
-            _releaseLock()
+            _release_lock()
 
-    def services(self):
-        return ServiceLocator._services.keys()
+    @classmethod
+    def service(cls, service_key):
+        """
+        Given a potential service key, return the service associated with it.
 
-service_locator = ServiceLocator()
+        Parameters
+        ----------
+        service_key : Hashable
+            The key which we wish to lookup a service with.
+
+        Returns
+        -------
+        Service
+            The previously registered service associated with the supplied `service_key`.
+
+        Raises
+        ------
+        KeyError
+            If no service is associated with the supplied `service_key`
+        TypeError
+            If the supplied `service_key` is unhashable
+        """
+        try:
+            _acquire_lock()
+            return cls._services[service_key]
+        finally:
+            _release_lock()
+
+    @classmethod
+    def services(cls):
+        """
+        Return a list of keys for registered services.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        [ Hashable,... ]
+            Shallow copy of the list of registered service keys.
+        """
+        try:
+            _acquire_lock()
+            return cls._services.keys()[:]
+        finally:
+            _release_lock()
+
+
+SERVICE_LOCATOR = ServiceLocator()
 
 class ServiceProxy(object):
     """
@@ -92,8 +187,21 @@ class ServiceProxy(object):
     a slight runtime penalty.
     This class should handle proxied instances as well as classes
     """
-    def __init__(self, service):
-        self._service_name = service
+    def __init__(self, service_key):
+        """
+        Initialize a ServiceProxy with a service. The ServiceProxy's job is to
+        defer reification of the proxied service until first use. This is primarily
+        to make importing ServiceProxy consumers order independent from service
+        registry.
+
+        Parameters
+        ----------
+        service_key : Hashable
+            The key expected to be registered with the ServiceLocator. This may be
+            any hashable object, although typically, one expects either a string or
+            an abstract class, depending upon the ServiceLocator setup.
+        """
+        self._service_key = service_key
         self._service = None
         self._args = []
         self._kwargs = {}
@@ -105,7 +213,7 @@ class ServiceProxy(object):
 
     def __getattr__(self, name):
         if self._service is None:
-            self._service = get_service(self._service_name)
+            self._service = get_service(self._service_key)
             if inspect.isclass(self._service):
                 self._service = self._service(*self._args, **self._kwargs)
                 # dont want to hang on to references and prevent
@@ -114,30 +222,106 @@ class ServiceProxy(object):
                 del self._kwargs
         return getattr(self._service, name)
 
-def get_service_proxy(service):
+def get_service_proxy(service_key):
     """
-    Retrieve a proxy
-    """
-    return ServiceProxy(service)
+    Retrieve a ServiceProxy instance which defers retrieval of the requested
+    service until first use.
 
-def get_service(service):
+    Parameters
+    ----------
+    service_key : Hashable
+        Retrieve a service associated with the supplied service key. This can
+        be any hashable object, but will typically be a string or class,
+        depending on whether or not key_is_superclass() has been invoked during set.
+
+    Returns
+    -------
+    service
+        The service associated with the service_key, wrapped in a ServiceProxy.
+        The wrapped service may be an instance or class. Both are supported by
+        the ServiceProxy.
+
+    Raises
+    ------
+    KeyError
+        If a non-extant service_key is supplied
     """
-    retrieve a service. This call returns the service directly. The
+    return ServiceProxy(service_key)
+
+def get_service(service_key):
+    """
+    Retrieve a service. This call returns the service directly. The
     calling code should be imported after service registration. For
     this reason, we also provide get_service_proxy, which does not
     have this limitation.
+
+    Parameters
+    ----------
+    service_key : Hashable
+        Retrieve a service associated with the supplied service key. This can
+        be any hashable object, but will typically be a string or class,
+        depending on whether or not key_is_superclass() has been invoked during set.
+
+    Returns
+    -------
+    service
+        The service associated with the service_key. This may be an instance
+        or class. Both are supported
+
+    Raises
+    ------
+    KeyError
+        If a non-extant service_key is supplied
     """
-    return service_locator.service(service)
+    return SERVICE_LOCATOR.service(service_key)
 
 
 def services():
     """
-    Return a list of keys for registered services
+    Return a list of keys for registered services.
+
+    Parameters
+    ----------
+    None
+
+    Returns
+    -------
+    [ Hashable,... ]
+        Shallow copy of the list of registered service keys.
     """
-    return service_locator.services()
+    return SERVICE_LOCATOR.services()
 
 def register(key, service):
-    service_locator.register(key, service)
+    """
+    Register a `service` with the ServiceLocator with the associated `key`.
 
-def key_is_superclass():
-    service_locator._key_is_superclass = True
+    Parameters
+    ----------
+    key : Hashable
+        The key under which one whishes to register the supplied `service`. The
+        only restriction is that the key must be hashable, athough it is typically
+        a string. Alternatively, if `key_is_superclass()` has been invoked during setup,
+        one expects a superclass of the service, and ideally an abstract class at that.
+
+    Raises
+    ------
+    AssertionError
+        if `key_is_superclass()` has been invoked, and the service is not
+        either an instance or subclass of `key`.
+    TypeError
+        If the key supplied is not hashable.
+    """
+    SERVICE_LOCATOR.register(key, service)
+
+def key_is_superclass(value=True):
+    """
+    Configure the ServiceLocator to expect service keys to be superclasses of
+    their registered services. Note: Invoccation of this function does not affect
+    previously registered services.
+
+    Parameters
+    ----------
+    value : bool
+        Set the state to be True or False. By default, `value` defaults to True.
+    """
+    SERVICE_LOCATOR.key_is_superclass = value

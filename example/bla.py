@@ -1,8 +1,8 @@
 from example.context import service_locator
 from example.services import BaseDioculator, BaseLogger
 
-cls = service_locator.get_service_proxy(BaseLogger)
-logger = cls(__name__)
+logger_cls = service_locator.get_service_proxy(BaseLogger)
+logger = logger_cls(__name__)
 
 
 class Bla(object):
