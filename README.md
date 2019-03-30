@@ -1,0 +1,2 @@
+# ServiceLocator
+This is a test implementation of a service locator, inspired by the need for an alternative IoC pattern to simple dependency injection via class __init__s. While I like IoC and recognize that DependencyInjection has a lot going for it when used in a strongly typed language, in Python, it tends lead to hard-to-follow code without extreme discipline - a lot of intermediate classes passing dependencies through them. Having to chase dependencies around to understand what the heck is going on. yuck.
