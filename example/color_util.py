@@ -4,6 +4,7 @@ Utility class to set bgcolor in terminal
 
 __all__ = (
     "BgColors",
+    "printint",
     "ColorCM"
 )
 
@@ -81,6 +82,12 @@ class BgColors(object):
             return '\033[4m'
         return ''
 
+
+def printit(main, *kwargs):
+    """print function for TestColors"""
+    if len(kwargs) > 0:
+        main = main.format(*kwargs)
+    print main
 
 
 class ColorCM(object):

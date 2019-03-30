@@ -14,6 +14,7 @@ class Callme(object):
         self.myargs = self.myargs.extend(args)
         self.mykwargs = self.mykwargs.extend(dict(kwargs))
 
+
 class TestColors(unittest.TestCase):
     """test colors"""
 
