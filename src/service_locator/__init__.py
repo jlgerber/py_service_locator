@@ -109,23 +109,16 @@ class ServiceLocator(object):
         TypeError
             If the key supplied is not hashable.
         """
-        # try:
-        #     _acquire_lock()
-        #     if self.key_is_superclass:
-        #         if inspect.isclass(service):
-        #             assert issubclass(service, key)
-        #         else:
-        #             assert isinstance(service, key)
-        #     ServiceLocator._services[key] = service
-        # finally:
-        #     _release_lock()
-        with LockCM() as lock:
+        try:
+            _acquire_lock()
             if self.key_is_superclass:
                 if inspect.isclass(service):
                     assert issubclass(service, key)
                 else:
                     assert isinstance(service, key)
             ServiceLocator._services[key] = service
+        finally:
+            _release_lock()
 
     @classmethod
     def has_service(cls, service_key):
@@ -144,13 +137,12 @@ class ServiceLocator(object):
         TypeError
             If `service_key` is unhashable.
         """
-        # try:
-        #     _acquire_lock()
-        #     return cls._services.has_key(service_key)
-        # finally:
-        #     _release_lock()
-        with LockCM() as lock:
+        try:
+            _acquire_lock()
             return cls._services.has_key(service_key)
+        finally:
+            _release_lock()
+
 
     @classmethod
     def service(cls, service_key):
@@ -174,14 +166,12 @@ class ServiceLocator(object):
         TypeError
             If the supplied `service_key` is unhashable
         """
-        # try:
-        #     _acquire_lock()
-        #     return cls._services[service_key]
-        # finally:
-        #     _release_lock()
-
-        with LockCM() as lock:
+        try:
+            _acquire_lock()
             return cls._services[service_key]
+        finally:
+            _release_lock()
+
 
     @classmethod
     def services(cls):
@@ -197,13 +187,12 @@ class ServiceLocator(object):
         [ Hashable,... ]
             Shallow copy of the list of registered service keys.
         """
-        # try:
-        #     _acquire_lock()
-        #     return cls._services.keys()[:]
-        # finally:
-        #     _release_lock()
-        with LockCM() as lock:
+        try:
+            _acquire_lock()
             return cls._services.keys()[:]
+        finally:
+            _release_lock()
+
 
 
 SERVICE_LOCATOR = ServiceLocator()
