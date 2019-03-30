@@ -3,17 +3,16 @@ from abc import ABCMeta, abstractmethod
 class BaseLogger:
     __meta__ = ABCMeta
 
-@abstractmethod
-def debug(self, *args):
-    raise NotImplementedError()
+    @abstractmethod
+    def debug(self, *args):
+        pass
+    @abstractmethod
+    def info(self, *kwargs):
+        pass
 
-@abstractmethod
-def info(self, *kwargs):
-    raise NotImplementedError()
-
-@abstractmethod
-def warn(self, *kwargs):
-    raise NotImplementedError()
+    @abstractmethod
+    def warn(self, *kwargs):
+        pass
 
 
 class Logger(BaseLogger):
@@ -29,12 +28,13 @@ class Logger(BaseLogger):
     def warn(self, *args):
         print "WARN: {}:".format(self.name)," ".join(args)
 
+
 class BaseDioculator:
     __meta__ = ABCMeta
 
-@abstractmethod
-def dioculate(self):
-    raise NotImplementedError()
+    @abstractmethod
+    def dioculate(self):
+        pass
 
 class Dioculator(BaseDioculator):
     def __init__(self, frombulator):
