@@ -1,6 +1,10 @@
 from abc import ABCMeta, abstractmethod
 
 class BaseLogger:
+    """
+    ABC Logger class which defines a minimal logging
+    interface
+    """
     __meta__ = ABCMeta
 
     @abstractmethod
@@ -12,6 +16,17 @@ class BaseLogger:
 
     @abstractmethod
     def warn(self, *kwargs):
+        pass
+
+
+class BaseDioculator:
+    """
+    ABC Dioculator class which provides base class behavior
+    """
+    __meta__ = ABCMeta
+
+    @abstractmethod
+    def dioculate(self):
         pass
 
 
@@ -28,13 +43,6 @@ class Logger(BaseLogger):
     def warn(self, *args):
         print "WARN: {}:".format(self.name)," ".join(args)
 
-
-class BaseDioculator:
-    __meta__ = ABCMeta
-
-    @abstractmethod
-    def dioculate(self):
-        pass
 
 class Dioculator(BaseDioculator):
     def __init__(self, frombulator):
