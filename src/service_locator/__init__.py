@@ -74,6 +74,7 @@ class LockCM(object):
     def __exit__(self, exc_type, exc_value, exc_traceback):
         _release_lock()
 
+
 class ServiceLocator(object):
     """
     Class which tracks services. A service may be a python instance
@@ -109,6 +110,13 @@ class ServiceLocator(object):
         TypeError
             If the key supplied is not hashable.
         """
+        with LockCM() as lock:
+            if self.key_is_superclass:
+                if inspect.isclass(service):
+                    assert issubclass(service, key)
+                else:
+                    assert isinstance(service, key)
+            ServiceLocator._services[key] = service
         # try:
         #     _acquire_lock()
         #     if self.key_is_superclass:
@@ -119,13 +127,6 @@ class ServiceLocator(object):
         #     ServiceLocator._services[key] = service
         # finally:
         #     _release_lock()
-        with LockCM() as lock:
-            if self.key_is_superclass:
-                if inspect.isclass(service):
-                    assert issubclass(service, key)
-                else:
-                    assert isinstance(service, key)
-            ServiceLocator._services[key] = service
 
     @classmethod
     def has_service(cls, service_key):
@@ -144,13 +145,13 @@ class ServiceLocator(object):
         TypeError
             If `service_key` is unhashable.
         """
+        with LockCM() as lock:
+            return cls._services.has_key(service_key)
         # try:
         #     _acquire_lock()
         #     return cls._services.has_key(service_key)
         # finally:
         #     _release_lock()
-        with LockCM() as lock:
-            return cls._services.has_key(service_key)
 
     @classmethod
     def service(cls, service_key):
@@ -174,14 +175,14 @@ class ServiceLocator(object):
         TypeError
             If the supplied `service_key` is unhashable
         """
+        with LockCM() as lock:
+            return cls._services[service_key]
         # try:
         #     _acquire_lock()
         #     return cls._services[service_key]
         # finally:
         #     _release_lock()
 
-        with LockCM() as lock:
-            return cls._services[service_key]
 
     @classmethod
     def services(cls):
@@ -197,13 +198,13 @@ class ServiceLocator(object):
         [ Hashable,... ]
             Shallow copy of the list of registered service keys.
         """
+        with LockCM() as lock:
+            return cls._services.keys()[:]
         # try:
         #     _acquire_lock()
         #     return cls._services.keys()[:]
         # finally:
         #     _release_lock()
-        with LockCM() as lock:
-            return cls._services.keys()[:]
 
 
 SERVICE_LOCATOR = ServiceLocator()
