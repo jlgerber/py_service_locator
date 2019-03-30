@@ -1,7 +1,7 @@
 import unittest
 from .context import service_locator
 
-class UseSuperclassMC(object):
+class UseSuperclassCM(object):
     """
     contect manager to ensure that the key_is_superclass is turned on and off during the
     execution
@@ -47,7 +47,7 @@ class TestServiceLocator(unittest.TestCase):
             def test(self):
                 return "success"
 
-        with UseSuperclassMC() as sclass:
+        with UseSuperclassCM() as sclass:
             #service_locator.key_is_superclass()
             service_locator.register(BaseFoo, Foo())
             foo = service_locator.get_service(BaseFoo)
@@ -63,7 +63,7 @@ class TestServiceLocator(unittest.TestCase):
             def test(self):
                 return "success"
         #service_locator.key_is_superclass()
-        with UseSuperclassMC() as sclass:
+        with UseSuperclassCM() as sclass:
             with self.assertRaises(Exception) as context:
                 service_locator.register("BaseFoo", Foo())
             self.assertTrue( context.exception is not None)
@@ -77,7 +77,7 @@ class TestServiceLocator(unittest.TestCase):
             def test(self):
                 return "success"
 
-        with UseSuperclassMC() as sclass:
+        with UseSuperclassCM() as sclass:
             service_locator.register(BaseFoo, Foo)
             foo = service_locator.get_service(BaseFoo)
             expect = "success"
@@ -92,7 +92,7 @@ class TestServiceLocator(unittest.TestCase):
             def test(self):
                 return "success"
 
-        with UseSuperclassMC() as sclass:
+        with UseSuperclassCM() as sclass:
             with self.assertRaises(Exception) as context:
                 service_locator.register("BaseFoo", Foo)
             self.assertTrue( context.exception is not None)
