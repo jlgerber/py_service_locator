@@ -95,6 +95,8 @@ class ServiceBinding(object):
 
     def __repr__(self):
         return "ServiceBinding(bind_key={}, bindee={})".format(self._bind_key, self._bindee)
+
+
 class ServiceLocator(object):
     """
     Class which tracks services. A service may be a python instance
