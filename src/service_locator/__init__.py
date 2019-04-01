@@ -303,6 +303,11 @@ def get_service_proxy(service_key, bindee):
         be any hashable object, but will typically be a string or class,
         depending on whether or not key_is_superclass() has been invoked during set.
 
+    location : String
+        Set the location of the bindee
+
+    bindee : string | class
+        The entity which is requesting the service via the service key
     Returns
     -------
     service
