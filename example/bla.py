@@ -14,7 +14,7 @@ class Bla(object):
     interfaces, we can instruct service_locator to expect keys to be superclasses
     of registered services, thus establishing a contract for behavior.
     """
-    dioculator = service_locator.get_service_proxy(BaseDioculator, 'Bla')("frombulator")
+    dioculator = service_locator.get_service_proxy(BaseDioculator, ".".join((__name__,'Bla')))("frombulator")
 
     def __init__(self):
         """
