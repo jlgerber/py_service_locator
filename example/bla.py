@@ -4,7 +4,7 @@ example service locator usage.
 from example.context import service_locator
 from example.services import BaseDioculator, BaseLogger
 
-LOGGER_CLS = service_locator.get_service_proxy(BaseLogger)
+LOGGER_CLS = service_locator.get_service_proxy(BaseLogger, None)
 LOGGER = LOGGER_CLS(__name__)
 
 
@@ -14,7 +14,7 @@ class Bla(object):
     interfaces, we can instruct service_locator to expect keys to be superclasses
     of registered services, thus establishing a contract for behavior.
     """
-    dioculator = service_locator.get_service_proxy(BaseDioculator)("frombulator")
+    dioculator = service_locator.get_service_proxy(BaseDioculator, 'Bla')("frombulator")
 
     def __init__(self):
         """

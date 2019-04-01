@@ -21,6 +21,13 @@ def main():
     """
     entry point for exe
     """
+
+    missing = service_locator.unbound_services()
+    if len(missing) > 0:
+        print "ERROR: failed to configure all required services. Missing bindings:"
+        for binding in missing:
+            print "\t",binding
+        return
     bla = Bla()
     bla.talk()
 

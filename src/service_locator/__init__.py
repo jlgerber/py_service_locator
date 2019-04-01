@@ -28,7 +28,7 @@ try:
     import threading
 except ImportError:
     thread = None
-
+import weakref
 
 __all__ = (
     "get_service",
@@ -75,13 +75,36 @@ class LockCM(object):
         _release_lock()
 
 
+class ServiceBinding(object):
+    """
+    Store the a bind key and bindee for later validation
+    """
+    def __init__(self, bind_key, bindee):
+        self._bind_key = bind_key
+        self._bindee = bindee
+
+    @property
+    def bind_key(self):
+        """retrieve the bind_key"""
+        return self._bind_key
+
+    @property
+    def bindee(self):
+        """retrieve the bindee"""
+        return self._bindee
+
+    def __repr__(self):
+        return "ServiceBinding(bind_key={}, bindee={})".format(self._bind_key, self._bindee)
 class ServiceLocator(object):
     """
     Class which tracks services. A service may be a python instance
     or class.
     """
+    # todo - move to instance variables. module instantiation enforces singleton
+    # store services
     _services = {}
-
+    # store service requests
+    _bindings = []
     def __init__(self, key_is_superclass=False):
         """
         If key_is_superclass is True, then we require the key to be
@@ -116,17 +139,39 @@ class ServiceLocator(object):
                     assert issubclass(service, key)
                 else:
                     assert isinstance(service, key)
+
             ServiceLocator._services[key] = service
-        # try:
-        #     _acquire_lock()
-        #     if self.key_is_superclass:
-        #         if inspect.isclass(service):
-        #             assert issubclass(service, key)
-        #         else:
-        #             assert isinstance(service, key)
-        #     ServiceLocator._services[key] = service
-        # finally:
-        #     _release_lock()
+
+    @classmethod
+    def register_binding(cls, binding_key, bindee):
+        """
+        register bindings
+        """
+        try:
+            bindee_ref = weakref.ref(bindee)
+        except Exception:
+            bindee_ref = bindee
+        if inspect.isclass(binding_key):
+            ServiceLocator._bindings.append(ServiceBinding(binding_key, bindee_ref))
+        else:
+            ServiceLocator._bindings.append(ServiceBinding(weakref.ref(binding_key), bindee_ref))
+
+    @classmethod
+    def unbound_services(cls):
+        """
+        validate that all of the services requested by consumers have been configured.
+
+        Returns
+        --------
+        [ServiceBinding] : A list of service bindings which lack registered services.
+                           If the length of validate's returned value is > 0, there is
+                           an issue.
+        """
+
+        def is_registered(item):
+            return cls._services.has_key(item.bind_key)
+
+        return [x for x in cls._bindings if not is_registered(x)]
 
     @classmethod
     def has_service(cls, service_key):
@@ -147,11 +192,7 @@ class ServiceLocator(object):
         """
         with LockCM() as lock:
             return cls._services.has_key(service_key)
-        # try:
-        #     _acquire_lock()
-        #     return cls._services.has_key(service_key)
-        # finally:
-        #     _release_lock()
+
 
     @classmethod
     def service(cls, service_key):
@@ -177,11 +218,7 @@ class ServiceLocator(object):
         """
         with LockCM() as lock:
             return cls._services[service_key]
-        # try:
-        #     _acquire_lock()
-        #     return cls._services[service_key]
-        # finally:
-        #     _release_lock()
+
 
 
     @classmethod
@@ -200,11 +237,7 @@ class ServiceLocator(object):
         """
         with LockCM() as lock:
             return cls._services.keys()[:]
-        # try:
-        #     _acquire_lock()
-        #     return cls._services.keys()[:]
-        # finally:
-        #     _release_lock()
+
 
 
 SERVICE_LOCATOR = ServiceLocator()
@@ -253,7 +286,7 @@ class ServiceProxy(object):
                 del self._kwargs
         return getattr(self._service, name)
 
-def get_service_proxy(service_key):
+def get_service_proxy(service_key, bindee):
     """
     Retrieve a ServiceProxy instance which defers retrieval of the requested
     service until first use.
@@ -277,6 +310,7 @@ def get_service_proxy(service_key):
     KeyError
         If a non-extant service_key is supplied
     """
+    SERVICE_LOCATOR.register_binding(service_key, bindee)
     return ServiceProxy(service_key)
 
 def get_service(service_key):
@@ -343,6 +377,12 @@ def register(key, service):
         If the key supplied is not hashable.
     """
     SERVICE_LOCATOR.register(key, service)
+
+def unbound_services():
+    """
+    Retrieve unbound services
+    """
+    return SERVICE_LOCATOR.unbound_services()
 
 def key_is_superclass(value=True):
     """
