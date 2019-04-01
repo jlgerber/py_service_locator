@@ -4,6 +4,7 @@ services
 Abstract base classes followed by example implementations
 """
 from abc import (ABCMeta, abstractmethod)
+from example.context import service_locator
 
 class BaseLogger(object):
     """
@@ -40,6 +41,32 @@ class BaseDioculator(object):
         pass
 
 
+class BaseFrombulator(object):
+    __meta__ = ABCMeta
+
+    def __init__(self, frombulator):
+        self.frombulator = frombulator
+
+    @abstractmethod
+    def name(self):
+        pass
+
+    @abstractmethod
+    def frombulate(self):
+        """frobulate"""
+        pass
+
+class Frombulator(BaseFrombulator):
+    def __init__(self, name):
+        name = name or "myfrombulator"
+        super(Frombulator, self).__init__(name)
+
+    def frombulate(self):
+        print "frombulating with {}".format(self.frombulator)
+
+    def name(self):
+        return self.frombulator
+
 class Logger(BaseLogger):
     """
     BaseLogger implementation
@@ -73,15 +100,17 @@ class Dioculator(BaseDioculator):
     """
     trivial dioculator impl
     """
+    _frombulator_cls = service_locator.get_service_proxy(BaseFrombulator, "Dioculator")
+
     def __init__(self, frombulator):
         """
         initialize dioculator with frombulator. Note: we do not
         validate frombulator
         """
-        self.frombulator = frombulator
+        self.frombulator = self.__class__._frombulator_cls(frombulator)
 
     def dioculate(self):
         """
         dioculate interface impl
         """
-        print "Dioculating with frombulator: '{}'".format(self.frombulator)
+        print "Dioculating with frombulator: '{}'".format(self.frombulator.name())
