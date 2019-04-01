@@ -107,13 +107,15 @@ class ServiceLocator(object):
     _services = {}
     # store service requests
     _bindings = []
-    def __init__(self, key_is_superclass=False):
+
+    def __init__(self, key_is_superclass=False, allow_instances=True):
         """
         If key_is_superclass is True, then we require the key to be
         the superclass of the service. This promotes SOLID design
         by requiring the dependence on an interface for a service
         """
         self.key_is_superclass = key_is_superclass
+        self.allow_instances = allow_instances
 
     @classmethod
     def init_from_kwargs(cls, **kwargs):
@@ -123,7 +125,13 @@ class ServiceLocator(object):
         """
         configure the service locator via kwargs
         """
-        self.key_is_superclass = kwargs.get("key_is_superclass", self.key_is_superclass)
+        for arg in (x for x in inspect.getargspec(ServiceLocator.__init__).args if x != "self"):
+            try:
+                if kwargs.has_key(arg):
+                    setattr(self, arg, kwargs.get(arg))
+            except Exception as e:
+                print "Error configuring ServiceLocator. Error:", e, "Argument:", arg
+        #self.key_is_superclass = kwargs.get("key_is_superclass", self.key_is_superclass)
         return self
 
     def register(self, key, service):

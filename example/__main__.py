@@ -18,7 +18,10 @@ from example.bla import Bla
 
 # configure the service_locator to expect service_keys
 # to be superclasses of registered services
-service_locator.configure(key_is_superclass=True)
+service_locator.configure(
+    key_is_superclass=True,
+    allow_instances=False
+)
 # register some services
 # try commenting out one or the other
 service_locator.register(BaseLogger, ColorLogger)
