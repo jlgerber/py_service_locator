@@ -1,7 +1,7 @@
 """
 Utility class to set bgcolor in terminal
 """
-
+import sys
 __all__ = (
     "BgColors",
     "printint",
@@ -83,10 +83,17 @@ class BgColors(object):
         return ''
 
 
-def printit(main, *kwargs):
+def printit(main, *args):
     """print function for TestColors"""
-    if len(kwargs) > 0:
-        main = main.format(*kwargs)
+    # when main is passed in, it will be at minimum len(4) if there is only
+    # a color specified. we need to print the color code without
+    # introducing spaces or newlines
+    if len(main) == 4 and len(args) == 0:
+        sys.stdout.write(main)
+        sys.stdout.flush
+        return
+    if len(args) > 0:
+        main = main.format(*args)
     print main
 
 

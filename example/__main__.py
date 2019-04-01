@@ -6,6 +6,7 @@ import resources and invoke main function
 from example.context import service_locator
 from example.services import (
     Logger,
+    ColorLogger,
     Dioculator,
     Frombulator,
     BaseDioculator,
@@ -20,7 +21,7 @@ from example.bla import Bla
 service_locator.key_is_superclass()
 # register some services
 # try commenting out one or the other
-service_locator.register(BaseLogger, Logger)
+service_locator.register(BaseLogger, ColorLogger)
 service_locator.register(BaseDioculator, Dioculator)
 service_locator.register(BaseFrombulator, Frombulator)
 
