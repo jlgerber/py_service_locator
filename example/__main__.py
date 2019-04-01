@@ -11,7 +11,7 @@ from example.services import (
 )
 from example.dioculator import Dioculator
 from example.frombulator import Frombulator
-from example.logger import (ColorLogger, Logger)
+from example.logger import (ColorLogger, Logger, EnvColorLogger, EnvLogger)
 from example.bla import Bla
 
 # configure the service_locator to expect service_keys
@@ -22,7 +22,7 @@ service_locator.configure(
 )
 # register some services
 # try commenting out one or the other
-service_locator.register(BaseLogger, ColorLogger)
+service_locator.register(BaseLogger, EnvColorLogger)
 # alternative to ColorLogger
 #service_locator.register(BaseLogger, Logger)
 # example mistake
