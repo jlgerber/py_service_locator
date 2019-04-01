@@ -135,10 +135,15 @@ class ServiceLocator(object):
         """
         with LockCM() as lock:
             if self.key_is_superclass:
-                if inspect.isclass(service):
-                    assert issubclass(service, key)
+                if inspect.isclass(key):
+                    keyname = key.__name__
                 else:
-                    assert isinstance(service, key)
+                    keyname = key.__class__.__name__
+                if inspect.isclass(service):
+                    assert issubclass(service, key), "{} must be a subclass of {}".format(service.__name__, keyname)
+
+                else:
+                    assert isinstance(service, key), "{} must be an instance of {}".format(service, keyname)
 
             ServiceLocator._services[key] = service
 
