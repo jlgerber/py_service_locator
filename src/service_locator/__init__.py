@@ -162,10 +162,12 @@ class ServiceLocator(object):
                     keyname = key.__class__.__name__
                 if inspect.isclass(service):
                     assert issubclass(service, key), "{} must be a subclass of {}".format(service.__name__, keyname)
-
                 else:
                     assert isinstance(service, key), "{} must be an instance of {}".format(service, keyname)
-
+            if not self.allow_instances:
+                if not inspect.isclass(service):
+                    raise KeyError("ServiceLocator has been configured to disallow"
+                    "registration of class instances: service: {} key: {}".format(service, keyname))
             ServiceLocator._services[key] = service
 
     @classmethod
