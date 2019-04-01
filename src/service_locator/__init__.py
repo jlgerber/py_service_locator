@@ -100,7 +100,7 @@ class ServiceBinding(object):
 class ServiceLocator(object):
     """
     Class which tracks services. A service may be a python instance
-    or class.
+    or class by default. However this is influenced by configuration options.
     """
     # todo - move to instance variables. module instantiation enforces singleton
     # store services
