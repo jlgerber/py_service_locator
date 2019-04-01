@@ -4,7 +4,7 @@ example service locator usage.
 from example.context import service_locator
 from example.services import BaseDioculator, BaseLogger
 
-LOGGER_CLS = service_locator.get_service_proxy(BaseLogger, None)
+LOGGER_CLS = service_locator.get_service_proxy(BaseLogger, __name__)
 LOGGER = LOGGER_CLS(__name__)
 
 

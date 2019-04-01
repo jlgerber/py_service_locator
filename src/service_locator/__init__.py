@@ -145,9 +145,12 @@ class ServiceLocator(object):
     @classmethod
     def register_binding(cls, binding_key, bindee):
         """
-        register bindings
+        register service bindings on declaration. This is used to determine whether
+        the service_locator is correctly configured
         """
         try:
+            # this implies that the bindee is an instance. This could present a problem
+            # for validation, as registration wouldn't necessarily be happening up front.
             bindee_ref = weakref.ref(bindee)
         except Exception:
             bindee_ref = bindee
@@ -167,7 +170,9 @@ class ServiceLocator(object):
                            If the length of validate's returned value is > 0, there is
                            an issue.
         """
-
+        # Registration detection works for service proxies created at the class and module
+        # level. It will not work in a proxy consumer's __init__, as this wont get called
+        # before getting the list of unbound services
         def is_registered(item):
             return cls._services.has_key(item.bind_key)
 
@@ -239,8 +244,8 @@ class ServiceLocator(object):
             return cls._services.keys()[:]
 
 
-
 SERVICE_LOCATOR = ServiceLocator()
+
 
 class ServiceProxy(object):
     """
