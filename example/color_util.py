@@ -1,5 +1,5 @@
 """
-Utility class to set bgcolor in terminal
+Utility classes relating to coloring text output to the terminal.
 """
 import sys
 __all__ = (
@@ -99,7 +99,7 @@ def printit(main, *args):
 
 class ColorCM(object):
     """
-    contact manager for setting a color
+    Context manager for setting a color.
     """
     def __init__(self, func, color_name):
         """

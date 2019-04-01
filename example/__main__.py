@@ -5,15 +5,13 @@ import resources and invoke main function
 """
 from example.context import service_locator
 from example.services import (
-    Logger,
-    ColorLogger,
-    Dioculator,
-    Frombulator,
     BaseDioculator,
     BaseFrombulator,
     BaseLogger
 )
-
+from example.dioculator import Dioculator
+from example.frombulator import Frombulator
+from example.logger import (ColorLogger, Logger)
 from example.bla import Bla
 
 # configure the service_locator to expect service_keys
