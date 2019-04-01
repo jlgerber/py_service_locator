@@ -22,6 +22,11 @@ service_locator.key_is_superclass()
 # register some services
 # try commenting out one or the other
 service_locator.register(BaseLogger, ColorLogger)
+# alternative to ColorLogger
+#service_locator.register(BaseLogger, Logger)
+# example mistake
+#service_locator.register(BaseLogger, Dioculator)
+
 service_locator.register(BaseDioculator, Dioculator)
 service_locator.register(BaseFrombulator, Frombulator)
 
