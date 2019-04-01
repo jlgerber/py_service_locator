@@ -4,7 +4,6 @@ services
 Abstract base classes followed by example implementations
 """
 from abc import (ABCMeta, abstractmethod)
-from example.context import service_locator
 
 
 __all__ = (
@@ -49,13 +48,22 @@ class BaseDioculator(object):
 
 
 class BaseFrombulator(object):
+    """
+    Base Frombulator class
+    """
     __meta__ = ABCMeta
 
     def __init__(self, frombulator):
+        """
+        initialize the Frombulator with a frombulator
+        """
         self.frombulator = frombulator
 
     @abstractmethod
     def name(self):
+        """
+        Retrieve the name of the frombulator
+        """
         pass
 
     @abstractmethod

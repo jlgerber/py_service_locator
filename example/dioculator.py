@@ -17,7 +17,10 @@ class Dioculator(BaseDioculator):
     they started experimenting with unsound methodologies. Not quite the
     undergraduate variety, but doesn't require a PHD to follow.
     """
-    _frombulator_cls = service_locator.get_service_proxy(BaseFrombulator, ".".join((__name__, "Dioculator")))
+    frombulator_cls = service_locator.get_service_proxy(
+        service_key=BaseFrombulator,
+        binee=".".join((__name__, "Dioculator"))
+    )
 
     def __init__(self, frombulator):
         """
@@ -25,7 +28,7 @@ class Dioculator(BaseDioculator):
         validate frombulator
         """
         LOGGER.info("Dioculator initialized")
-        self.frombulator = self.__class__._frombulator_cls(frombulator)
+        self.frombulator = self.__class__.frombulator_cls(frombulator)
 
     def dioculate(self):
         """
