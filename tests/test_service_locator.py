@@ -16,6 +16,7 @@ class UseSuperclassCM(object):
     def __exit__(self, exc_type, exc_value, exc_traceback):
         service_locator.key_is_superclass(self.is_super)
 
+
 class TestServiceLocator(unittest.TestCase):
 
     def test_can_store_instance(self):

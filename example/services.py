@@ -16,6 +16,7 @@ class BaseLogger(object):
     def debug(self, *args):
         """debug"""
         pass
+
     @abstractmethod
     def info(self, *kwargs):
         """info"""
