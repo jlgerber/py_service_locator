@@ -113,6 +113,17 @@ class ServiceLocator(object):
         """
         self.key_is_superclass = key_is_superclass
 
+    @classmethod
+    def init_from_kwargs(cls, **kwargs):
+        cls(**kwargs)
+
+    def configure(self, **kwargs):
+        """
+        configure the service locator via kwargs
+        """
+        self.key_is_superclass = kwargs.get("key_is_superclass", self.key_is_superclass)
+        return self
+
     def register(self, key, service):
         """
         Register a service with the ServiceLocator.
@@ -399,7 +410,7 @@ def unbound_services():
     """
     return SERVICE_LOCATOR.unbound_services()
 
-def key_is_superclass(value=True):
+def configure(**kwargs):
     """
     Configure the ServiceLocator to expect service keys to be superclasses of
     their registered services. Note: Invoccation of this function does not affect
@@ -407,7 +418,6 @@ def key_is_superclass(value=True):
 
     Parameters
     ----------
-    value : bool
-        Set the state to be True or False. By default, `value` defaults to True.
+    kwargs : various
     """
-    SERVICE_LOCATOR.key_is_superclass = value
+    SERVICE_LOCATOR.configure(**kwargs)
