@@ -4,63 +4,26 @@ This is a service locator implementation, inspired by the need for an alternativ
 1. Import the service proxy into each module that requires a service, and look up said service using `get_service` or `get_service_proxy`.
 2. Configure the service locator and register service implmentations with it.
 
-## Configuration
+## Simple Useage
 
-The service locator has a couple of options, depending upon your use case. The simpest way of using the service locator has you register dependency classes or instances name via `service_locator.register`, and then look them up with corresponding calls to `service_locator.get_service_proxy`.
+The service locator has a couple of options, depending upon our use case. The simpest way of using the service locator has us register dependency classes or instances  via `service_locator.register` in our executable, and look them up with corresponding calls to `service_locator.get_service` in our modules.
 
-### Example 1
-The simple path. Here we have the main.py
+By default, `service_locator.register` takes a key, which can be any hashable object, and a service, which may be any python class or instance. The `service_locator.get_service_proxy` call takes a key, which should correspond with a registered key, and returns a ServiceProxy wrapping the registered class or instance. This is a simple workflow, but has a couple of drawbacks.
 
-#### example1/__main__.py
-```python
-# in main
-import service_locator
-from example1.myservice import Service1
-from example1.myservice import Service1
+First, there is no way of establishing a contract between the service consumer and service provider. How do the producer and consumer express requirements for what is being produced / consumed?
 
-from consumer import Consumer
-from consumer2 import Consumer2
+Second, there is no way to guarantee that the producer has registered sufficient services to cover all of the registered requests. Failures in this regard will manifest at runtime.
 
-service_locator.register("service1", Service1)
-service_locator.register("service2", Service2)
+So how do we fix this?
 
-def main():
-    c1 = Consumer1("stuff")
-    c2 = Consumer2("some other thing")
-    c1.things()
-    c2.foobar()
-if __name__ == "__main__":
-    main()
-```
+Here are some guidelines.
 
-### example1/consumer.py
-```python
-# in consumer.py
-from service_locator import get_service_proxy
+## Prefered Usage
 
-class Consumer(object):
-    service1 = get_service_proxy('service1', __name__ + ".Consumer")()
+First, we need to establish a *contract* between the consumer and the producer of each service. We do this by implementing base classes for our services, and using the base classes as keys when We register with `service_provider.register`, and when we look up via `get_service_proxy`.
 
-    def __init__(self, stuff):
-        self.stuff = stuff
+Second, we have to instruct the service_proxy to require that each registered class is a subclass of the key, which should be one of those base classes from above. We do this by feeding a configuration dictionary to `service_locator.configure`, specifying `key_is_superclass` as True. This will cause `service_locator.register` to raise an exception should we fail to register a subclass of the key's class.
 
-    def things(self):
-        return self.service1.something_interesting(self.stuff)
-```
+Third, we have to restrict usage of `get_service_proxy` to module constants and class variables. This will allow the system to validate the registration immediately subsquent to it, but before the runtime is in full swing allowing us to fail early and consistently.
 
-### example1/consumer2.py
-```python
-# in consumer.py
-from service_locator import gt_service_proxy
-
-class Consumer2(object):
-    service2 = get_service_proxy('service1', __name__ + ".Consumer2")()
-
-    def __init__(self, otherthing)
-        self.otherthing  = otherthing
-
-    def foobar(self):
-        self.service2.barfoo(self.otherthing)
-...
-```
-
+Fourth, after registering all our services, validate that no ServiceProxy requests have been neglected by running `service_locator.unbound_services()`. This call returns a list of any unregistered service dependencies.
