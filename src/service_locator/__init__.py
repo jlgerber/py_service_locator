@@ -35,7 +35,7 @@ __all__ = (
     "register",
     "services",
     "get_service_proxy",
-    "key_is_superclass"
+    "configure"
 )
 
 #
