@@ -19,7 +19,7 @@ class Dioculator(BaseDioculator):
     """
     frombulator_cls = service_locator.get_service_proxy(
         service_key=BaseFrombulator,
-        binee=".".join((__name__, "Dioculator"))
+        bindee=".".join((__name__, "Dioculator"))
     )
 
     def __init__(self, frombulator):
